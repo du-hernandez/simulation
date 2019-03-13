@@ -8,7 +8,7 @@ public class simulador {
         La demanda almacena valores entre 45000 y 75000 y los suma, al finalizar la simulación
         divide la suma por el total de iteraciones
      */
-    private double demanda = 0;
+    public double demanda = 0;
     private int ensayos = 0; // Dada por el usuario
 
     /**
@@ -24,6 +24,7 @@ public class simulador {
     private double valorArticuloExcendente = 10; // $10
     private double gastosFijos = 100000; // $100000
     private double costosVariables = 34; // $34
+    private double costoTotal = 0;
     private double unidadesAProducir = 0; // Definida por el usuario. Según el problema se inicia con 60000 unidades
 
     private double demandaCubierta = 0;
@@ -34,34 +35,66 @@ public class simulador {
      * (sumatoria(ingresosVacacionalPROMEDIO + ingresosExcendentePROMEDIO -
      * costosVariablesPROMEDIO) - gastosFijospROMEDIO)
      */
-    private double utilidad = 0;
+    private double utilidadNeta = 0;
 
-    public simulador(double media, double desviacionEstandar) {
+    public simulador(double media, double desviacionEstandar, double inicio, double fin, int ensayos) {
         this.media = media;
         this.desviacionEstandar = desviacionEstandar;
+        this.inicio = inicio;
+        this.fin = fin;
+        this.ensayos = ensayos;
     }
 
     public static double runSimulationGlobal(double media, double desviacionEstandar, double inicio, double fin) {
         return JPMath.redondearDecimales(normal.getPx(aleatorio.getAleatorioGlobal(inicio, fin), media, desviacionEstandar), 3);
     }
 
-    public double runSimulationLocal(double media, double desviacionEstandar, double inicio, double fin) {
-        this.setMedia(media);
-        this.setDesviacionEstandar(desviacionEstandar);
-        this.setInicio(inicio);
-        this.setFin(fin);
-        return JPMath.redondearDecimales(normal.getPx(aleatorio.getAleatorioGlobal(this.getInicio(), this.getFin()), this.getMedia(), this.getDesviacionEstandar()), 3);
+    public void runSimulationLocal() {
+        this.setMedia(this.getMedia());
+        this.setDesviacionEstandar(this.getDesviacionEstandar());
+        this.setInicio(this.getInicio());
+        this.setFin(this.getFin());
+        this.setEnsayos(this.getEnsayos());
+
+        for (int i = 0; i < this.getEnsayos(); i++) {
+            this.Venta_Demanda();
+        }
+        // Encontramos el promedio de las demandas cubiertas
+        this.setDemandaCubierta(this.getDemandaCubierta() / this.getEnsayos());
+        // Encontramos el promedio de las demandas exedidas
+        this.setDemandaExcedida(this.getDemandaExcedida() / this.getEnsayos());
+        // Encontramos el promedio del ingreso Vacacional
+        this.setIngresoVacacional(this.getIngresoVacacional() / this.getEnsayos());
+        // Encontramos el promedio del ingreso excedido
+        this.setIngresoExcedente(this.getIngresoExcedente() / this.getEnsayos());
+        // Encontramos el promedio de la demanda
+        this.setDemanda(this.getDemanda() / this.getEnsayos());
+        // Encontramos el costo total
+        this.setCostoTotal(this.getCostoTotal() / this.getEnsayos());
+        // Encuentra la tulidad neta
+        this.setUtilidadNeta((this.getIngresoVacacional() + this.getIngresoExcedente() - this.getCostoTotal()) * -1);
     }
 
-    public void sumarDemanda() { // Suma la demanda en cada iteración
+    public void Venta_Demanda() { // Función encargada de llevar a cabo cada iteración (constituye la función fundamental)
         double demanda = aleatorio.getAleatorioGlobal(this.getInicio(), this.getFin());
         this.setDemanda(this.getDemanda() + demanda);
+        this.setCostoTotal(this.getCostoTotal() + this.getGastosFijos() + demanda * this.getCostosVariables());
+        this.sumarVentas(demanda, normal.getPx(demanda, this.getMedia(), this.getDesviacionEstandar()) * 100);
     }
 
-    public void sumarVentasVacacionales(double demanda, double porcentajeCubierto) {
+    /**
+     *
+     * @param demanda: utilizadada como la cantidad de producto a fabricar
+     * @param porcentajeCubierto
+     */
+    public void sumarVentas(double demanda, double porcentajeCubierto) {
+        // Suma demandas Vacasionales / ventas concretadas en el periodo vacasional
         this.setDemandaCubierta(this.getDemandaCubierta() + (porcentajeCubierto * demanda) / 100);
+        // Suma demandas excedidas / Ventas concretadas fuera del periodo vacasional
         this.setDemandaExcedida(this.getDemandaExcedida() + (demanda - (porcentajeCubierto * demanda) / 100));
+        // Suma ingresos vacasionales
         this.setIngresoVacacional(this.getIngresoVacacional() + ((porcentajeCubierto * demanda) / 100) * this.getValorArticuloVacacional());
+        // Suma ingresos por la venta de productos en exceso
         this.setIngresoExcedente(this.getIngresoExcedente() + ((demanda - (porcentajeCubierto * demanda) / 100) * this.getValorArticuloExcendente()));
     }
 
@@ -262,6 +295,20 @@ public class simulador {
     }
 
     /**
+     * @return the costoTotal
+     */
+    public double getCostoTotal() {
+        return costoTotal;
+    }
+
+    /**
+     * @param costoTotal the costoTotal to set
+     */
+    public void setCostoTotal(double costoTotal) {
+        this.costoTotal = costoTotal;
+    }
+
+    /**
      * @return the unidadesAProducir
      */
     public double getUnidadesAProducir() {
@@ -304,16 +351,16 @@ public class simulador {
     }
 
     /**
-     * @return the utilidad
+     * @return the utilidadNeta
      */
-    public double getUtilidad() {
-        return utilidad;
+    public double getUtilidadNeta() {
+        return utilidadNeta;
     }
 
     /**
-     * @param utilidad the utilidad to set
+     * @param utilidadNeta the utilidadNeta to set
      */
-    public void setUtilidad(double utilidad) {
-        this.utilidad = utilidad;
+    public void setUtilidadNeta(double utilidadNeta) {
+        this.utilidadNeta = utilidadNeta;
     }
 }
