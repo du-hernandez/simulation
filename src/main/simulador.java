@@ -3,29 +3,36 @@ package main;
 public class simulador {
 
     private double media = 0, desviacionEstandar = 0, inicio = 0, fin = 0;
-    
+
     /*
         La demanda almacena valores entre 45000 y 75000 y los suma, al finalizar la simulación
         divide la suma por el total de iteraciones
-    */
+     */
     private double demanda = 0;
     private int ensayos = 0; // Dada por el usuario
-    
+
     /**
      * Almacena el promedio de ventas que se lleven a cabo, este es dicho por el
      * valor generado por el aleatorio
      */
     private double ventasVacacionales = 0;
     private double ventasExedentes = 0;
-    
-    private double ingresosVacacional = 42; // $42
-    private double ingresosExcendente = 10; // $10
+
+    private double ingresoVacacional = 0;
+    private double ingresoExcedente = 0;
+    private double valorArticuloVacacional = 42; // $42
+    private double valorArticuloExcendente = 10; // $10
     private double gastosFijos = 100000; // $100000
     private double costosVariables = 34; // $34
     private double unidadesAProducir = 0; // Definida por el usuario. Según el problema se inicia con 60000 unidades
-    
+
+    private double demandaCubierta = 0;
+    private double demandaExcedida = 0;
+
     /**
-     * La utilidad esperada se da como el promedio de la (sumatoria(ingresosVacacionalPROMEDIO + ingresosExcendentePROMEDIO  - costosVariablesPROMEDIO) - gastosFijospROMEDIO)
+     * La utilidad esperada se da como el promedio de la
+     * (sumatoria(ingresosVacacionalPROMEDIO + ingresosExcendentePROMEDIO -
+     * costosVariablesPROMEDIO) - gastosFijospROMEDIO)
      */
     private double utilidad = 0;
 
@@ -46,10 +53,16 @@ public class simulador {
         return JPMath.redondearDecimales(normal.getPx(aleatorio.getAleatorioGlobal(this.getInicio(), this.getFin()), this.getMedia(), this.getDesviacionEstandar()), 3);
     }
 
-    public double sumarDemanda() { // Suma la demanda en cada iteración
+    public void sumarDemanda() { // Suma la demanda en cada iteración
         double demanda = aleatorio.getAleatorioGlobal(this.getInicio(), this.getFin());
         this.setDemanda(this.getDemanda() + demanda);
-        return demanda;
+    }
+
+    public void sumarVentasVacacionales(double demanda, double porcentajeCubierto) {
+        this.setDemandaCubierta(this.getDemandaCubierta() + (porcentajeCubierto * demanda) / 100);
+        this.setDemandaExcedida(this.getDemandaExcedida() + (demanda - (porcentajeCubierto * demanda) / 100));
+        this.setIngresoVacacional(this.getIngresoVacacional() + ((porcentajeCubierto * demanda) / 100) * this.getValorArticuloVacacional());
+        this.setIngresoExcedente(this.getIngresoExcedente() + ((demanda - (porcentajeCubierto * demanda) / 100) * this.getValorArticuloExcendente()));
     }
 
     /**
@@ -165,31 +178,59 @@ public class simulador {
     }
 
     /**
-     * @return the ingresosVacacional
+     * @return the ingresoVacacional
      */
-    public double getIngresosVacacional() {
-        return ingresosVacacional;
+    public double getIngresoVacacional() {
+        return ingresoVacacional;
     }
 
     /**
-     * @param ingresosVacacional the ingresosVacacional to set
+     * @param ingresoVacacional the ingresoVacacional to set
      */
-    public void setIngresosVacacional(double ingresosVacacional) {
-        this.ingresosVacacional = ingresosVacacional;
+    public void setIngresoVacacional(double ingresoVacacional) {
+        this.ingresoVacacional = ingresoVacacional;
     }
 
     /**
-     * @return the ingresosExcendente
+     * @return the ingresoExcedente
      */
-    public double getIngresosExcendente() {
-        return ingresosExcendente;
+    public double getIngresoExcedente() {
+        return ingresoExcedente;
     }
 
     /**
-     * @param ingresosExcendente the ingresosExcendente to set
+     * @param ingresoExcedente the ingresoExcedente to set
      */
-    public void setIngresosExcendente(double ingresosExcendente) {
-        this.ingresosExcendente = ingresosExcendente;
+    public void setIngresoExcedente(double ingresoExcedente) {
+        this.ingresoExcedente = ingresoExcedente;
+    }
+
+    /**
+     * @return the valorArticuloVacacional
+     */
+    public double getValorArticuloVacacional() {
+        return valorArticuloVacacional;
+    }
+
+    /**
+     * @param valorArticuloVacacional the valorArticuloVacacional to set
+     */
+    public void setValorArticuloVacacional(double valorArticuloVacacional) {
+        this.valorArticuloVacacional = valorArticuloVacacional;
+    }
+
+    /**
+     * @return the valorArticuloExcendente
+     */
+    public double getValorArticuloExcendente() {
+        return valorArticuloExcendente;
+    }
+
+    /**
+     * @param valorArticuloExcendente the valorArticuloExcendente to set
+     */
+    public void setValorArticuloExcendente(double valorArticuloExcendente) {
+        this.valorArticuloExcendente = valorArticuloExcendente;
     }
 
     /**
@@ -232,6 +273,34 @@ public class simulador {
      */
     public void setUnidadesAProducir(double unidadesAProducir) {
         this.unidadesAProducir = unidadesAProducir;
+    }
+
+    /**
+     * @return the demandaCubierta
+     */
+    public double getDemandaCubierta() {
+        return demandaCubierta;
+    }
+
+    /**
+     * @param demandaCubierta the demandaCubierta to set
+     */
+    public void setDemandaCubierta(double demandaCubierta) {
+        this.demandaCubierta = demandaCubierta;
+    }
+
+    /**
+     * @return the demandaExcedida
+     */
+    public double getDemandaExcedida() {
+        return demandaExcedida;
+    }
+
+    /**
+     * @param demandaExcedida the demandaExcedida to set
+     */
+    public void setDemandaExcedida(double demandaExcedida) {
+        this.demandaExcedida = demandaExcedida;
     }
 
     /**
